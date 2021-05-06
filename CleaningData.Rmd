@@ -1,0 +1,599 @@
+---
+title: "Data Cleaning"
+author: "Oren Ross"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r data}
+
+Demog <- read.csv("Data/Demographics.csv")
+SQS_2018 <- read.csv("Data/2018_SQS_Results.csv")
+SQS_2019 <- read.csv("Data/2019_SQS_Results.csv")
+NYSA_ELA_School <- read.csv("Data/School_ELA_NYSA.csv")
+NYSA_MATH_School <- read.csv("Data/School_MATH_NYSA.csv")
+NYSA_ELA_SES <- read.csv("Data/SES_ELA_NYSA.csv")
+NYSA_MATH_SES <- read.csv("Data/SES_MATH_NYSA.csv")
+School_Locations <- read.csv("Data/School_Locations.csv")
+Attendance_School <- read.csv("Data/Attendance_School.csv")
+
+```
+
+
+Cleaning NYSA, Demographic, and Location data
+
+First up, the ELA NYSA scores
+
+```{r ELA}
+# colnames(NYSA_ELA_School)
+
+# Removing columns that are not needed, ones that are number of students that scored rather than percent
+NYSA_ELA_School_1 <- NYSA_ELA_School[,-c(1, 6, 7, 9, 11, 13, 15, 17)]
+
+
+NYSA_ELA_School_1 <- NYSA_ELA_School_1 %>% dplyr::rename_all(function(NYSA_ELA_School_1) paste0("ELA_", NYSA_ELA_School_1))
+
+NYSA_ELA_School_1[,5:10] <- sapply(NYSA_ELA_School_1[,5:10],as.character)
+NYSA_ELA_School_1[,5:10] <- sapply(NYSA_ELA_School_1[,5:10],as.numeric)
+
+NYSA_ELA_School_1 <- NYSA_ELA_School_1 %>% dplyr::rename(DBN = ELA_DBN)
+
+ELA_Years <- filter(NYSA_ELA_School_1, ELA_Grade == "All Grades")
+ELA_Years <- ELA_Years[, -c(3)]
+
+ELA18 <- filter(ELA_Years, ELA_Year == "2018")
+ELA19 <- filter(ELA_Years, ELA_Year == "2019")
+
+```
+
+Followed by the math scores
+
+```{r MATH}
+# colnames(NYSA_MATH_School)
+
+# Removing columns that are not needed
+NYSA_MATH_School_1 <- NYSA_MATH_School[,-c(1, 6, 7, 9, 11, 13, 15, 17)]
+
+
+NYSA_MATH_School_1 <- NYSA_MATH_School_1 %>% dplyr::rename_all(function(NYSA_MATH_School_1) paste0("MATH_", NYSA_MATH_School_1))
+
+NYSA_MATH_School_1[,5:10] <- sapply(NYSA_MATH_School_1[,5:10],as.character)
+NYSA_MATH_School_1[,5:10] <- sapply(NYSA_MATH_School_1[,5:10],as.numeric)
+
+NYSA_MATH_School_1 <- NYSA_MATH_School_1 %>% dplyr::rename(DBN = MATH_DBN)
+
+MATH_Years <- filter(NYSA_MATH_School_1, MATH_Grade == "All Grades")
+MATH_Years <- MATH_Years[, -c(3)]
+
+MATH18 <- filter(MATH_Years, MATH_Year == "2018")
+MATH19 <- filter(MATH_Years, MATH_Year == "2019")
+```
+
+Now by SES
+
+```{r ELA SES}
+# colnames(NYSA_ELA_SES)
+
+# Removing columns that are not needed
+NYSA_ELA_SES_1 <- NYSA_ELA_SES[,-c(1, 7, 9, 11, 13, 15, 17)]
+# colnames(NYSA_ELA_SES_1)
+
+NYSA_ELA_SES_1 <- NYSA_ELA_SES_1 %>% dplyr::rename_all(function(NYSA_ELA_SES_1) paste0("ELA_SES_", NYSA_ELA_SES_1))
+
+NYSA_ELA_SES_1[,6:11] <- sapply(NYSA_ELA_SES_1[,6:11],as.character)
+NYSA_ELA_SES_1[,6:11] <- sapply(NYSA_ELA_SES_1[,6:11],as.numeric)
+
+NYSA_ELA_SES_1 <- NYSA_ELA_SES_1 %>% dplyr::rename(DBN = ELA_SES_DBN)
+
+ELA_SES_Years <- filter(NYSA_ELA_SES_1, ELA_SES_Grade == "All Grades")
+ELA_SES_Years <- ELA_SES_Years[, -c(3)]
+# colnames(ELA_SES_Years)
+
+
+# Filtering by Econ
+ELA_EconDis <- filter(ELA_SES_Years, ELA_SES_Category == "Econ Disadv")
+ELA_EconDis <- ELA_EconDis %>% dplyr::rename_all(function(ELA_EconDis) paste0("ELA_EconDis_", ELA_EconDis))
+ELA_EconDis <- ELA_EconDis %>% dplyr::rename(DBN = ELA_EconDis_DBN)
+# colnames(ELA_EconDis)
+ELA_EconDis <- ELA_EconDis[,-c(2, 4)]
+
+ELA_NotEconDis <- filter(ELA_SES_Years, ELA_SES_Category == "Not Econ Disadv")
+ELA_NotEconDis <- ELA_NotEconDis %>% dplyr::rename_all(function(ELA_NotEconDis) paste0("ELA_NotEconDis_", ELA_NotEconDis))
+ELA_NotEconDis <- ELA_NotEconDis %>% dplyr::rename(DBN = ELA_NotEconDis_DBN)
+# colnames(ELA_NotEconDis)
+ELA_NotEconDis <- ELA_NotEconDis[,-c(2, 4)]
+
+
+ELA_EconDis_18 <- filter(ELA_EconDis, ELA_EconDis_ELA_SES_Year == "2018")
+ELA_NotEconDis_18 <- filter(ELA_NotEconDis, ELA_NotEconDis_ELA_SES_Year == "2018")
+ELA18_SES <- dplyr::inner_join(ELA_EconDis_18, ELA_NotEconDis_18, by = "DBN")
+# colnames(ELA18_SES)
+ELA18_SES <- ELA18_SES[,-c(2, 9)]
+# colnames(ELA18_SES)
+
+ELA_EconDis_19 <- filter(ELA_EconDis, ELA_EconDis_ELA_SES_Year == "2019")
+ELA_NotEconDis_19 <- filter(ELA_NotEconDis, ELA_NotEconDis_ELA_SES_Year == "2019")
+ELA19_SES <- dplyr::inner_join(ELA_EconDis_19, ELA_NotEconDis_19, by = "DBN")
+# colnames(ELA19_SES)
+ELA19_SES <- ELA19_SES[,-c(2, 9)]
+# colnames(ELA19_SES)
+
+
+```
+
+
+```{r MATH SES}
+# colnames(NYSA_MATH_SES)
+
+# Removing columns that are not needed
+NYSA_MATH_SES_1 <- NYSA_MATH_SES[,-c(1, 7, 9, 11, 13, 15, 17)]
+# colnames(NYSA_MATH_SES_1)
+
+NYSA_MATH_SES_1 <- NYSA_MATH_SES_1 %>% dplyr::rename_all(function(NYSA_MATH_SES_1) paste0("MATH_SES_", NYSA_MATH_SES_1))
+
+NYSA_MATH_SES_1[,6:11] <- sapply(NYSA_MATH_SES_1[,6:11],as.character)
+NYSA_MATH_SES_1[,6:11] <- sapply(NYSA_MATH_SES_1[,6:11],as.numeric)
+
+NYSA_MATH_SES_1 <- NYSA_MATH_SES_1 %>% dplyr::rename(DBN = MATH_SES_DBN)
+
+MATH_SES_Years <- filter(NYSA_MATH_SES_1, MATH_SES_Grade == "All Grades")
+MATH_SES_Years <- MATH_SES_Years[, -c(3)]
+# colnames(MATH_SES_Years)
+
+
+# Filtering by Econ
+MATH_EconDis <- filter(MATH_SES_Years, MATH_SES_Category == "Econ Disadv")
+MATH_EconDis <- MATH_EconDis %>% dplyr::rename_all(function(MATH_EconDis) paste0("MATH_EconDis_", MATH_EconDis))
+MATH_EconDis <- MATH_EconDis %>% dplyr::rename(DBN = MATH_EconDis_DBN)
+# colnames(MATH_EconDis)
+MATH_EconDis <- MATH_EconDis[,-c(2, 4)]
+
+MATH_NotEconDis <- filter(MATH_SES_Years, MATH_SES_Category == "Not Econ Disadv")
+MATH_NotEconDis <- MATH_NotEconDis %>% dplyr::rename_all(function(MATH_NotEconDis) paste0("MATH_NotEconDis_", MATH_NotEconDis))
+MATH_NotEconDis <- MATH_NotEconDis %>% dplyr::rename(DBN = MATH_NotEconDis_DBN)
+# colnames(MATH_NotEconDis)
+MATH_NotEconDis <- MATH_NotEconDis[,-c(2, 4)]
+
+
+MATH_EconDis_18 <- filter(MATH_EconDis, MATH_EconDis_MATH_SES_Year == "2018")
+MATH_NotEconDis_18 <- filter(MATH_NotEconDis, MATH_NotEconDis_MATH_SES_Year == "2018")
+MATH18_SES <- dplyr::inner_join(MATH_EconDis_18, MATH_NotEconDis_18, by = "DBN")
+# colnames(MATH18_SES)
+MATH18_SES <- MATH18_SES[,-c(2, 9)]
+# colnames(MATH18_SES)
+
+MATH_EconDis_19 <- filter(MATH_EconDis, MATH_EconDis_MATH_SES_Year == "2019")
+MATH_NotEconDis_19 <- filter(MATH_NotEconDis, MATH_NotEconDis_MATH_SES_Year == "2019")
+MATH19_SES <- dplyr::inner_join(MATH_EconDis_19, MATH_NotEconDis_19, by = "DBN")
+# colnames(MATH19_SES)
+MATH19_SES <- MATH19_SES[,-c(2, 9)]
+# colnames(MATH19_SES)
+
+
+
+```
+
+Time to merge NYSA scores
+
+```{r merge NYSA}
+
+ELANYSA_18 <- dplyr::inner_join(ELA18, ELA18_SES, by = "DBN")
+MATHNYSA_18 <- dplyr::inner_join(MATH18, MATH18_SES, by = "DBN")
+NYSA_18 <- dplyr::inner_join(ELANYSA_18, MATHNYSA_18, by = "DBN")
+
+ELANYSA_19 <- dplyr::inner_join(ELA19, ELA19_SES, by = "DBN")
+MATHNYSA_19 <- dplyr::inner_join(MATH19, MATH19_SES, by = "DBN")
+NYSA_19 <- dplyr::inner_join(ELANYSA_19, MATHNYSA_19, by = "DBN")
+
+```
+
+
+
+
+```{r demographic data}
+
+Demog$X..Female.1 <- gsub( "%", "", Demog$X..Female.1)
+Demog$X..Male.1 <- gsub( "%", "", Demog$X..Male.1)
+Demog$X..Asian.1 <- gsub( "%", "", Demog$X..Asian.1)
+Demog$X..Black.1 <- gsub( "%", "", Demog$X..Black.1)
+Demog$X..Hispanic.1 <- gsub( "%", "", Demog$X..Hispanic.1)
+Demog$X..Multiple.Race.Categories.Not.Represented.1 <- gsub( "%", "", Demog$X..Multiple.Race.Categories.Not.Represented.1)
+Demog$X..White.1 <- gsub( "%", "", Demog$X..White.1)
+Demog$X..Students.with.Disabilities.1 <- gsub( "%", "", Demog$X..Students.with.Disabilities.1)
+Demog$X..English.Language.Learners.1 <- gsub( "%", "", Demog$X..English.Language.Learners.1 )
+Demog$X..Poverty.1 <- gsub( "%", "", Demog$X..Poverty.1)
+Demog$Economic.Need.Index <- gsub( "%", "", Demog$Economic.Need.Index)
+
+Demog[,12:39] <- sapply(Demog[,12:39],as.character)
+Demog[,12:39] <- sapply(Demog[,12:39],as.numeric)
+
+
+Demo18 <- filter(Demog, Year == "2017-18")
+Demo19 <- filter(Demog, Year == "2018-19")
+
+```
+
+
+
+Editing the locations data so it works with what I am looking at
+
+```{r Locations}
+# Checking names of columns to see what I need to keep
+# colnames(School_Locations)
+
+# Removing unneccesesary columns
+School_Locations_1 <- School_Locations[,-c(1, 3, 5:13, 21:22, 24:27, 30:33, 35:38)]
+
+# Converting code names into charcters
+School_Locations_1[,1] <- sapply(School_Locations_1[,1], as.character)
+
+# colnames(School_Locations_1)
+
+# Converting some intgers to factors
+School_Locations_1[,7:9] <- sapply(School_Locations_1[,7:9], as.character)
+School_Locations_1[,7:9] <- lapply(School_Locations_1[,7:9], factor)
+
+# converting Coordinate to numerical
+School_Locations_1[,5:6] <- sapply(School_Locations_1[,5:6],as.character)
+School_Locations_1[,5:6] <- sapply(School_Locations_1[,5:6],as.numeric)
+
+# Changing the name of column for later use
+colnames(School_Locations_1)[2] <- "School.Name"
+# colnames(School_Locations_1)
+
+School_Locations_1 <- School_Locations_1 %>% separate(Location.1,
+                c("Borough", "Zip", "Latitude", "Longitude"), sep = "([\\,\\(\\)])")
+School_Locations_1$Zip <- gsub( "NY ", "", School_Locations_1$Zip)
+School_Locations_1$Borough <- sapply(School_Locations_1$Borough, factor)
+School_Locations_1$Zip <- sapply(School_Locations_1$Zip, factor)
+options(digits=9)
+School_Locations_1$Latitude <- sapply(School_Locations_1$Latitude, as.numeric)
+School_Locations_1$Longitude <- sapply(School_Locations_1$Longitude, as.numeric)
+
+# Something is off in boroughs
+unique(School_Locations_1$Borough)
+
+# Fixing boroughs
+School_Locations_1$Borough<- gsub( "Bronx", "BRONX", School_Locations_1$Borough)
+School_Locations_1$Borough<- gsub( "ROCKAWAY PARK", "QUEENS", School_Locations_1$Borough)
+School_Locations_1$Borough<- gsub( "JAMAICA", "QUEENS", School_Locations_1$Borough)
+School_Locations_1$Borough<- gsub( "JACKSON HEIGHTS", "QUEENS", School_Locations_1$Borough)
+School_Locations_1$Borough<- gsub( "Staten Island", "STATEN ISLAND", School_Locations_1$Borough)
+School_Locations_1$Borough<- gsub( "NEW YORK", "MANHATTAN", School_Locations_1$Borough)
+School_Locations_1$Borough <- sapply(School_Locations_1$Borough,as.factor)
+
+
+School_Locations_1$Borough<- gsub( "BAYSIDE", "QUEENS", School_Locations_1$Borough)
+School_Locations_1$Borough<- gsub( "JAMAICA", "QUEENS", School_Locations_1$Borough)
+School_Locations_1$Borough<- gsub( "LONG ISLAND CITY", "QUEENS", School_Locations_1$Borough)
+School_Locations_1$Borough<- gsub( "IS", "ISLAND", School_Locations_1$Borough)
+School_Locations_1$Borough<- gsub( "ISLANDLAND", "ISLAND", School_Locations_1$Borough)
+School_Locations_1$Borough<- gsub( "New York", "MANHATTAN", School_Locations_1$Borough)
+School_Locations_1$Borough<- gsub( "MANHATTAN CITY", "MANHATTAN", School_Locations_1$Borough)
+School_Locations_1$Borough<- gsub( "Long Island City", "QUEENS", School_Locations_1$Borough)
+School_Locations_1$Borough<- gsub( "Manhattan", "MANHATTAN", School_Locations_1$Borough)
+School_Locations_1$Borough<- gsub( "Brooklyn", "BROOKLYN", School_Locations_1$Borough)
+School_Locations_1$Borough[1580] <- "QUEENS"
+
+
+unique(School_Locations_1$Borough)
+
+School_Locations_1 <- mutate_at(School_Locations_1, vars(Borough), as.factor)
+
+
+
+```
+
+Merging Demo and Location
+
+```{r merging demo and locations}
+DEMO_LOC_18 <- dplyr::inner_join(Demo18, School_Locations_1, by = "School.Name")
+DEMO_LOC_19 <- dplyr::inner_join(Demo19, School_Locations_1, by = "School.Name")
+```
+
+And now merging NYSA and Demo/Loc
+
+```{r merging scores and demo/loc}
+NYSA_DEM_LOC_18 <- dplyr::inner_join(NYSA_18, DEMO_LOC_18, by = "DBN")
+NYSA_DEM_LOC_19 <- dplyr::inner_join(NYSA_19, DEMO_LOC_19, by = "DBN")
+
+# colnames(NYSA_DEM_LOC_18)
+NYSA_DEM_LOC_18 <- NYSA_DEM_LOC_18[,-c(3,22, 23, 42, 43, 45:59, 61, 63, 65, 67 ,69, 71, 73, 75, 77, 80)]
+# colnames(NYSA_DEM_LOC_19)
+NYSA_DEM_LOC_19 <- NYSA_DEM_LOC_19[,-c(3,22, 23, 42, 43, 45:59, 61, 63, 65, 67 ,69, 71, 73, 75, 77, 80)]
+```
+
+
+Now I am going to clean the SQS Data
+
+First up 2018
+
+```{r SQS Data Clean}
+# str(SQS_2018)
+
+SQS_2018_1 <- SQS_2018
+
+#Converting factors to numeric for DF
+SQS_2018_1$Total.Parent..Response.Rate <- gsub( "%", "", SQS_2018_1$Total.Parent..Response.Rate)
+SQS_2018_1$Total.Teacher.Response.Rate <- gsub( "%", "", SQS_2018_1$Total.Teacher.Response.Rate)
+SQS_2018_1$Total.Student.Response.Rate <- gsub( "%", "", SQS_2018_1$Total.Student.Response.Rate)
+
+
+SQS_2018_1[,3:11] <- sapply(SQS_2018_1[,3:11],as.character)
+SQS_2018_1[,3:11] <- sapply(SQS_2018_1[,3:11],as.numeric)
+
+#Calculate NAs for each column
+colSums(is.na(SQS_2018_1))
+
+```
+
+First need to remove supportive environment score because it is all NA. Based on the data, it might be best to remove all the schools that have NA for Strong Family Community Ties, since it will most likely remove all the ones that have ANY for some of the other columns.
+
+```{r remove rows}
+
+SQS_2018_1 <- SQS_2018_1[,-9]
+
+
+SQS_2018_1 <- SQS_2018_1[complete.cases(SQS_2018_1$Strong.Family.Community.Ties.Score),]
+colSums(is.na(SQS_2018_1))
+
+#also going to remove the last 6 rows with out the final four of the scores
+SQS_2018_1 <- SQS_2018_1[complete.cases(SQS_2018_1$Rigorous.Instruction.Score),]
+colSums(is.na(SQS_2018_1))
+
+```
+
+Now we only have the 610 students response rates that are missing. This is something we can figure out later.
+
+NOW REPEATING FOR 2019
+
+
+```{r SQS Data Clean}
+
+SQS_2019_1 <- SQS_2019[,-c(9)]
+# str(SQS_2019_1)
+# colnames(SQS_2019_1)
+#Converting factors to numeric for DF
+
+colnames(SQS_2019_1)[3] <- "Total.Parent..Response.Rate"
+colnames(SQS_2019_1)[4] <- "Total.Teacher.Response.Rate"
+colnames(SQS_2019_1)[5] <- "Total.Student.Response.Rate"
+
+# str(SQS_2019_1)
+
+SQS_2019_1$Total.Parent..Response.Rate <- gsub( "%", "", SQS_2019_1$Total.Parent..Response.Rate)
+SQS_2019_1$Total.Teacher.Response.Rate <- gsub( "%", "", SQS_2019_1$Total.Teacher.Response.Rate)
+SQS_2019_1$Total.Student.Response.Rate <- gsub( "%", "", SQS_2019_1$Total.Student.Response.Rate)
+SQS_2019_1[,4:10] <- sapply(SQS_2019_1[,4:10],as.character)
+SQS_2019_1[,3:10] <- sapply(SQS_2019_1[,3:10],as.numeric)
+
+
+#Calculate NAs for each column
+colSums(is.na(SQS_2019_1))
+
+
+```
+
+Based on the data, it might be best to remove all the schools that have NA for Strong Family Community Ties, since it will most likely remove all the ones that have ANY for some of the other columns.
+
+```{r remove rows}
+SQS_2019_1 <- SQS_2019_1[complete.cases(SQS_2019_1$Strong.Family.Community.Ties.Score),]
+colSums(is.na(SQS_2019_1))
+
+#now removing rigourous instruction bc it should remove the rest
+SQS_2019_1 <- SQS_2019_1[complete.cases(SQS_2019_1$Rigorous.Instruction.Score),]
+colSums(is.na(SQS_2019_1))
+
+```
+
+Now we only have the 641 students response rates that are missing. This is something we can figure out later, since it is similar to the 2018
+
+MERGING DATA TIME!!
+```{r time to fully merge}
+Full_18 <- dplyr::inner_join(SQS_2018_1, NYSA_DEM_LOC_18, by = "DBN")
+# colnames(Full_18)
+Full_18 <- Full_18[,-11]
+Full_18$Year <- "2018"
+
+Full_19 <- dplyr::inner_join(SQS_2019_1, NYSA_DEM_LOC_19, by = "DBN")
+Full_19 <- Full_19[,-11]
+Full_19$Year <- "2019"
+# colnames(Full_19)
+```
+
+
+```{r joining and renaming cols}
+
+FinalDF <- dplyr::full_join(Full_18, Full_19)
+
+
+# Now time to fix column names and stuff
+
+FinalDF$UniqueID <- paste(FinalDF$DBN, FinalDF$Year)
+# colnames(FinalDF)[23] <- "ELA.NotEconDis.ELA.SES.Mean.Scale.Score"
+for ( col in 1:ncol(FinalDF)){
+    colnames(FinalDF)[col] <-  sub("X..", "", colnames(FinalDF)[col])
+}
+for ( col in 1:ncol(FinalDF)){
+    colnames(FinalDF)[col] <-  sub(".1", "", colnames(FinalDF)[col])
+}
+for ( col in 1:ncol(FinalDF)){
+    colnames(FinalDF)[col] <-  sub(".3.4", ".Passing", colnames(FinalDF)[col])
+}
+for ( col in 1:ncol(FinalDF)){
+    colnames(FinalDF)[col] <-  gsub("[_]", ".", colnames(FinalDF)[col])
+}
+
+for ( col in 1:ncol(FinalDF)){
+    colnames(FinalDF)[col] <-  gsub(".Score", "", colnames(FinalDF)[col])
+}
+
+
+
+for ( col in 1:ncol(FinalDF)){
+    colnames(FinalDF)[col] <-  sub(".MATH", "", colnames(FinalDF)[col])
+}
+
+for ( col in 1:ncol(FinalDF)){
+    colnames(FinalDF)[col] <-  sub(".ELA", "", colnames(FinalDF)[col])
+}
+
+colnames(FinalDF)[53] <- "Multi.Racial"
+colnames(FinalDF)[61] <- "X.COORDINATE"
+
+# Rescaling
+
+FinalDF[,76:80]<-FinalDF[,6:10]*20
+
+for ( col in 76:ncol(FinalDF)){
+    colnames(FinalDF)[col] <-  sub(".1", "_Rescaled", colnames(FinalDF)[col])
+}
+
+
+```
+
+
+
+Creating Column for differences in mean by SES
+
+```{r differences in means scores}
+FinalDF$ELA.SES.Difference.Mean <- FinalDF$ELA.NotEconDis.SES.Mean.Scale - FinalDF$ELA.EconDis.SES.Mean.Scale
+FinalDF$ELA.SES.Difference.Passing <- FinalDF$ELA.NotEconDis.SES.Level.Passing - FinalDF$ELA.EconDis.SES.Level.Passing
+
+FinalDF$MATH.SES.Difference.Mean.Scores <- FinalDF$MATH.NotEconDis.SES.Mean.Scale - FinalDF$MATH.EconDis.SES.Mean.Scale
+FinalDF$MATH.SES.Difference.Passing <- FinalDF$MATH.NotEconDis.SES.Level.Passing - FinalDF$MATH.EconDis.SES.Level.Passing
+
+
+
+
+
+```
+
+
+```{r}
+# Now a list of all the column names to refer to later
+colnames(FinalDF)
+
+```
+
+
+
+
+```{r code for cleaning tables}
+Col.Labels.Clean <- c(
+  `(Intercept)` = "Intercept",
+  Collaborative.Teachers = "Collaborative Teachers Score",
+  Effective.School.Leadership = "Effective School Leadership Score", 
+  Rigorous.Instruction = "Rigorous Instruction Score", 
+  Strong.Family.Community.Ties = "Strong Family Community Ties Score",
+  Trust = "Trust Score",
+  ELA.Mean.Scale = "ELA Mean Test Score", 
+  ELA.Level.Passing = "ELA Percent Passing",
+  ELA.EconDis.SES.Mean.Scale = "ELA Mean Test Score - Economically Disadvantaged",
+  ELA.NotEconDis.SES.Mean.Scale = "ELA Mean Test Score - Not Economically Disadvantaged",
+    ELA.EconDis.SES.Level.Passing = "ELA Mean Percent Passing - Economically Disadvantaged",
+  ELA.NotEconDis.SES.Level.Passing = "ELA Mean Percent Passing - Not Economically Disadvantaged",
+    MATH.Mean.Scale = "MATH Mean Test Score", 
+  MATH.Level.Passing = "MATH Percent Passing",
+  MATH.EconDis.SES.Mean.Scale = "MATH Mean Test Score - Economically Disadvantaged",
+  MATH.NotEconDis.SES.Mean.Scale = "MATH Mean Test Score - Not Economically Disadvantaged",
+    MATH.EconDis.SES.Level.Passing = "MATH Mean Percent Passing - Economically Disadvantaged",
+  MATH.NotEconDis.SES.Level.Passing = "MATH Mean Percent Passing - Not Economically Disadvantaged",
+  Multi.Racial = "Multi Racial",                                                   
+Students.with.Disabilities =  "Students with Disabilities",   
+English.Language.Learners = "English Language Learners",                    
+Economic.Need.Index = "Economic Need Index",
+  Collaborative.Teachers_Rescaled = "Collaborative Teachers Score (Rescaled 0-100)",
+  Effective.School.Leadership_Rescaled = "Effective School Leadership Score (Rescaled 0-100)", 
+  Rigorous.Instruction_Rescaled = "Rigorous Instruction Score (Rescaled 0-100)", 
+  Strong.Family.Community.Ties_Rescaled = "Strong Family Community Ties Score (Rescaled 0-100)",
+  Trust_Rescaled = "Trust Score (Rescaled 0-100)",
+ELA.SES.Difference.Mean = "ELA Difference in Mean Score (Between Not Economically Disadvantaged and Economically Disadvantaged)"  ,            
+ELA.SES.Difference.Mean = "ELA Difference in Percent Passing (Between Not Economically Disadvantaged and Economically Disadvantaged)"  ,
+
+MATH.SES.Difference.Mean = "MATH Difference in Mean Score (Between Not Economically Disadvantaged and Economically Disadvantaged)"  ,            
+MATH.SES.Difference.Mean = "MATH Difference in Percent Passing (Between Not Economically Disadvantaged and Economically Disadvantaged)" ,
+  Collaborative.Teachers_Rescaled_GroupMean = "Collaborative Teachers Score - Group Mean (Rescaled 0-100)",
+  Effective.School.Leadership_Rescaled_GroupMean = "Effective School Leadership Score - Group Mean (Rescaled 0-100)", 
+  Rigorous.Instruction_Rescaled_GroupMean = "Rigorous Instruction Score - Group Mean (Rescaled 0-100)", 
+  Strong.Family.Community.Ties_Rescaled_GroupMean = "Strong Family Community Ties Score - Group Mean (Rescaled 0-100)",
+  Trust_Rescaled_GroupMean = "Trust Score - Group Mean (Rescaled 0-100)",
+
+
+Multi.Racial_GroupMean = "Multi Racial - Group Mean", 
+Asian_GroupMean = "Asian - Group Mean", 
+Black_GroupMean = "Black - Group Mean", 
+Hispanic_GroupMean = "Hispanic - Group Mean", 
+White_GroupMean = "White - Group Mean", 
+Multi.Racial_GroupMean = "Multi Racial - Group Mean", 
+Students.with.Disabilities_GroupMean =  "Students with Disabilities - Group Mean",   
+English.Language.Learners_GroupMean = "English Language Learners - Group Mean",                    
+Economic.Need.Index_GroupMean = "Economic Need Index - Group Mean"
+
+)
+
+# Creating easy callback for SQS formulas
+SQS_Rescaled <- c("Collaborative.Teachers_Rescaled", "Effective.School.Leadership_Rescaled", "Rigorous.Instruction_Rescaled", "Strong.Family.Community.Ties_Rescaled", "Trust_Rescaled")
+SQS_Orig <- c("Collaborative.Teachers", "Effective.School.Leadership", "Rigorous.Instruction", "Strong.Family.Community.Ties", "Trust")
+
+# Creating easy callback for Demographics for formulas
+Race_formula <- c("Asian", "Black", "Hispanic", "Multi.Racial", "White")
+Learn_Formula <- c("Students.with.Disabilities", "English.Language.Learners")
+
+RaceENI_formula <- c("Asian", "Black", "Hispanic", "Multi.Racial", "White", "Economic.Need.Index")
+# Just an example on how to create formula
+# as.formula(paste("ELA.Level.Passing", paste(SQS, collapse=" + ", sep = " + "), sep=" ~ "))
+# 
+# paste("ELA.Level.Passing", paste(paste(SQS_Rescaled, collapse=" + ", sep = " + "), "Economic.Need.Index",  collapse=" + ", sep = " + "), sep=" ~ ") 
+# 
+# 
+# as.formula(paste("ELA.Level.Passing", paste(paste(paste(SQS_Rescaled, collapse=" + ", sep = " + "), "Economic.Need.Index",  collapse=" + ", sep = " + "), "Economic.Need.Index|Rigorous.Instruction_Rescaled",  collapse=" + ", sep = " + "), sep=" ~ ")  )
+
+
+
+# 
+# 
+# testingDF <- var_labels(FinalDF,
+#   Collaborative.Teachers = "Collaborative Teachers Score",
+#   Effective.School.Leadership = "Effective School Leadership Score", 
+#   Rigorous.Instruction = "Rigorous Instruction Score", 
+#   Strong.Family.Community.Ties = "Strong Family Community Ties Score",
+#   Trust = "Trust Score",
+#   ELA.Mean.Scale = "ELA Mean Test Score", 
+#   ELA.Level.Passing = "ELA Percent Passing",
+#   ELA.EconDis.SES.Mean.Scale = "ELA Mean Test Score - Economically Disadvantaged",
+#   ELA.NotEconDis.SES.Mean.Scale = "ELA Mean Test Score - Not Economically Disadvantaged",
+#     ELA.EconDis.SES.Level.Passing = "ELA Mean Percent Passing - Economically Disadvantaged",
+#   ELA.NotEconDis.SES.Level.Passing = "ELA Mean Percent Passing - Not Economically Disadvantaged",
+#     MATH.Mean.Scale = "MATH Mean Test Score", 
+#   MATH.Level.Passing = "MATH Percent Passing",
+#   MATH.EconDis.SES.Mean.Scale = "MATH Mean Test Score - Economically Disadvantaged",
+#   MATH.NotEconDis.SES.Mean.Scale = "MATH Mean Test Score - Not Economically Disadvantaged",
+#     MATH.EconDis.SES.Level.Passing = "MATH Mean Percent Passing - Economically Disadvantaged",
+#   MATH.NotEconDis.SES.Level.Passing = "MATH Mean Percent Passing - Not Economically Disadvantaged",
+#   Multi.Racial = "Multi Racial",                                                   
+# Students.with.Disabilities =  "Students with Disabilities",   
+# English.Language.Learners = "English Language Learners",                    
+# Economic.Need.Index = "Economic Need Index",
+#   Collaborative.Teachers_Rescaled = "Collaborative Teachers Score (Rescaled 0-100)",
+#   Effective.School.Leadership_Rescaled = "Effective School Leadership Score (Rescaled 0-100)", 
+#   Rigorous.Instruction_Rescaled = "Rigorous Instruction Score (Rescaled 0-100)", 
+#   Strong.Family.Community.Ties_Rescaled = "Strong Family Community Ties Score (Rescaled 0-100)",
+#   Trust_Rescaled = "Trust Score (Rescaled 0-100)"
+# # ELA.SES.Difference.Mean = "ELA Difference in Mean Score (Between Not Economically Disadvantaged and Economically Disadvantaged)"  ,            
+# # ELA.SES.Difference.Mean = "ELA Difference in Percent Passing (Between Not Economically Disadvantaged and Economically Disadvantaged)"  ,
+# # 
+# # MATH.SES.Difference.Mean = "MATH Difference in Mean Score (Between Not Economically Disadvantaged and Economically Disadvantaged)"  ,            
+# # MATH.SES.Difference.Mean = "MATH Difference in Percent Passing (Between Not Economically Disadvantaged and Economically Disadvantaged)" 
+# )
+
+
+```
+

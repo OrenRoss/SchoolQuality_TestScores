@@ -1,0 +1,116 @@
+---
+title: "ANOVA"
+author: "Oren Ross"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r visualizing}
+
+
+columns.for.loop <- c(6:10, 11, 17, 23, 29, 35, 41, 50:58, 81:84)
+for (i in columns.for.loop){
+
+  loopBorough = reshape::melt(data = FinalDF, id.vars = "Borough", measure.vars = c(i))
+print(
+  ggplot(loopBorough,aes(x=Borough, y=value, fill=variable)) + geom_boxplot()  + theme(axis.text.x=element_text(angle = 45),
+        axis.ticks.x=element_blank()) 
+)
+print(
+  ggplot(loopBorough,aes(x=Borough, y=value, fill=variable)) + geom_violin()  + theme(axis.text.x=element_text(angle = 45),
+        axis.ticks.x=element_blank())
+)
+}
+
+
+
+loopBorough = reshape::melt(data = FinalDF, id.vars = "Borough", measure.vars = c(i))
+ggplot(loopBorough,aes(x=Borough, y=value, fill=variable)) + geom_boxplot()  + theme(axis.text.x=element_text(angle = 45),
+        axis.ticks.x=element_blank()) 
+ggplot(loopBorough,aes(x=Borough, y=value, fill=variable)) + geom_violin()  + theme(axis.text.x=element_text(angle = 45),
+        axis.ticks.x=element_blank())
+
+```
+
+
+
+
+```{r One-way and Pairwise}
+
+AnovaFinalDF = data.frame(matrix(vector(), 0, 10))
+colnames(AnovaFinalDF) <- c(paste("Variable"), paste("Levene Test - DF"), paste("Levene Test - F"), paste("Levene Test - p-value"), paste("Welch Test - denom DF"), paste("Welch Test - F"), paste("Welch Test - p-value"), paste("Brown Forsythe - DF2"), paste("Brown Forsythe Test - F"), paste("Brown Forsythe Test - p-value"))
+AnovaFinalDF[,1] <- lapply(AnovaFinalDF, as.character)
+
+GamesHowellDF = data.frame(matrix(vector(), 0, 8))
+colnames(GamesHowellDF) <- c(paste("Boroughs Compared"), paste("Variable"), paste("Difference"), paste("Conf Inter - Low"), paste("Conf Inter - Hi"), paste("T-Stat"), paste("DF"), paste("p-value"))
+GamesHowellDF[,c(1,2)] <- lapply(GamesHowellDF, as.character)
+
+for (i in c(6:11, 29, 50:58)){
+  # ANOVA WORK HERE
+  LoopAnovaFinalDF = data.frame(matrix(vector(), 1, 10))
+colnames(LoopAnovaFinalDF) <- c(paste("Variable"), paste("Levene Test - DF"), paste("Levene Test - F"), paste("Levene Test - p-value"), paste("Welch Test - denom DF"), paste("Welch Test - F"), paste("Welch Test - p-value"), paste("Brown Forsythe - DF2"), paste("Brown Forsythe Test - F"), paste("Brown Forsythe Test - p-value"))
+LoopAnovaFinalDF[,1] <- lapply(LoopAnovaFinalDF, as.character)
+
+loop <- userfriendlyscience::oneway(FinalDF[,i], FinalDF$Borough, levene=TRUE, posthoc="games-howell", means=FALSE, corrections = TRUE, fullDescribe=FALSE)
+
+    LoopAnovaFinalDF[1,1] <- colnames(FinalDF[i])
+    
+    LoopAnovaFinalDF[1,2] <- loop[["intermediate"]][["leveneTest"]][["Df"]][[2]]
+    LoopAnovaFinalDF[1,3] <- loop[["intermediate"]][["leveneTest"]][["F value"]][[1]]
+    LoopAnovaFinalDF[1,4] <- loop[["intermediate"]][["leveneTest"]][["Pr(>F)"]][[1]]
+    
+    LoopAnovaFinalDF[1,5] <- loop[["intermediate"]][["welch"]][["parameter"]][["denom df"]]
+    LoopAnovaFinalDF[1,6] <- loop[["intermediate"]][["welch"]][["statistic"]][["F"]]
+    LoopAnovaFinalDF[1,7] <- loop[["intermediate"]][["welch"]][["p.value"]]
+    
+    LoopAnovaFinalDF[1,8] <- loop[["intermediate"]][["brown.forsythe"]][["Df2"]]
+    LoopAnovaFinalDF[1,9] <- loop[["intermediate"]][["brown.forsythe"]][["F"]]
+    LoopAnovaFinalDF[1,10] <- loop[["intermediate"]][["brown.forsythe"]][["p"]]
+
+    AnovaFinalDF <- bind_rows(AnovaFinalDF, LoopAnovaFinalDF) 
+
+    
+    # Games Howell Work here
+    loop[["intermediate"]][["posthoc"]]
+    GamesHowellLoopDF <-  loop[["intermediate"]][["posthoc"]]
+        GamesHowellLoopDF <- rownames_to_column(GamesHowellLoopDF, var = "Boroughs Compared")
+  GamesHowellLoopDF <-    add_column(GamesHowellLoopDF, Variable = paste(colnames(FinalDF[i])), .before = "diff")
+colnames(GamesHowellLoopDF) <- c(paste("Boroughs Compared"), paste("Variable"), paste("Difference"), paste("Conf Inter - Low"), paste("Conf Inter - Hi"), paste("T-Stat"), paste("DF"), paste("p-value"))
+GamesHowellLoopDF[,c(1,2)] <- lapply(GamesHowellLoopDF, as.factor)
+
+    GamesHowellDF <- bind_rows(GamesHowellDF, GamesHowellLoopDF) 
+
+    
+
+  }
+AnovaFinalDF
+GamesHowellDF
+
+AnovaFinalDF[(AnovaFinalDF[,4]<.05),]
+AnovaFinalDF[(AnovaFinalDF[,7]<.05),]
+AnovaFinalDF[(AnovaFinalDF[,10]<.05),]
+GamesHowellDF[(GamesHowellDF[,8]<.05),]
+
+GamesbyBorough <- GamesHowellDF[(GamesHowellDF[,8]<.05),]
+
+# testGames_byBorough <- testGames
+# testGames_byBorough %>% separate(Boroughs Compared, c("Borough - 1", "Borough - 2"))
+
+Games_Split <- as.data.frame(str_split_fixed(GamesbyBorough$`Boroughs Compared`, "-", 2))
+Games_Splitv2 <- Games_Split[,c(2,1)]
+colnames(Games_Splitv2) <- c("V1", "V2")
+Games_Split <- bind_rows(Games_Split, Games_Splitv2)
+
+# ggplot(testGames,aes(x = testGames[,1])) + geom_bar() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x = "Boroughs Compared")
+
+ggplot(Games_Split,aes(factor(V1), fill = factor(V2)))  + geom_bar(position = position_dodge2(preserve = "single")) + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(x = "Borough", y = "Count of Variables", fill = "Borough", title = "Variables with Significant Differences in Pairwise Comparison of Boroughs")
+ggsave(
+  filename = "ANOVA_Pairwise.png", 
+  plot = last_plot()
+)
+
+```
+

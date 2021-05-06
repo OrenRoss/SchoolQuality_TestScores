@@ -1,0 +1,88 @@
+---
+title: "Linear Models"
+author: "Oren Ross"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+columns.SQS.Demo <- c(6:10, 50:58)
+columns.Tests <- c(11, 29)
+columns.Tests.passing <- c(16, 34)
+
+
+```
+
+
+
+```{r SQS and Test Scores}
+
+for (j in columns.Tests){
+  longLoop = melt(data = FinalDF, id.vars = paste(colnames(FinalDF[j])), measure.vars = c(6:10))
+names(longLoop)[1] <- "Score"
+print(
+  ggplot(longLoop, aes(Score, value, col=variable)) + geom_point(size = 0.01) +   stat_smooth(method="lm", se=FALSE, size=.5) + stat_smooth(aes(group=1), method="lm", size=1) + labs(x = paste(colnames(FinalDF[j]) %>% str_replace_all("[.]", " ")),y = "SQS Score", color = "School Quality Score")
+)
+#   ggsave(
+#   filename = paste("Linear.SQS.", colnames(FinalDF)[j], ".png", sep = ""), 
+#   plot = last_plot()
+# )
+}
+
+
+
+```
+
+
+```{r Demo and Test Scores}
+
+for (j in columns.Tests){
+  longLoop = melt(data = FinalDF, id.vars = paste(colnames(FinalDF[j])), measure.vars = c(50:58))
+names(longLoop)[1] <- "Score"
+print(
+  ggplot(longLoop, aes(Score, value, col=variable)) + geom_point(size = 0.01) +   stat_smooth(method="lm", se=FALSE, size=.5) + stat_smooth(aes(group=1), method="lm", size=1) + labs(x = paste(colnames(FinalDF[j]) %>% str_replace_all("[.]", " ")),y = "Percent of School", color = "Demographic")
+) 
+    
+#   ggsave(
+#   filename = paste("Linear.Demo.", colnames(FinalDF)[j], ".png", sep = ""), 
+#   plot = last_plot()
+# )
+  
+}
+
+```
+
+
+```{r Graphing Tests Scores individually}
+
+# for (j in columns.Tests){
+# for (i in columns.SQS.Demo){
+# 
+#   Loop_Plot <- ggplot(FinalDF, aes(x = FinalDF[,j], y = FinalDF[,i]))
+# 
+#   print(Loop_Plot + geom_point(size = .2) + geom_smooth(method = lm, color = "red") + geom_smooth(method = loess, color = "blue") + labs(x = paste(colnames(FinalDF[j]) %>% str_replace_all("[.]", " ")),y = paste(colnames(FinalDF[i]) %>% str_replace_all("[.]", " ")))
+# )
+# }
+# }
+
+```
+
+
+
+
+```{r Graphing Residuals}
+
+for (j in columns.Tests){
+for (i in columns.SQS.Demo){
+  Loop_LM <- glm(as.formula(paste(colnames(FinalDF[j]), colnames(FinalDF[i]), sep=" ~ ")), family = gaussian(), data = FinalDF)
+      p <- autoplot(Loop_LM, label.size = 3)
+    gridExtra::grid.arrange(grobs = p@plots, top = paste(colnames(FinalDF[j]), colnames(FinalDF[i]), sep=" ~ "))
+}
+}
+
+
+```

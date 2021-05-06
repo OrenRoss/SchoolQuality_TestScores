@@ -1,0 +1,315 @@
+---
+title: "Normality Testing"
+author: "Oren Ross"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+Here we are starting off with some normality testing. First off is Shapiro-Wilk test.
+
+```{r Shapiro-Wilk Test}
+
+shapTest <- normality(FinalDF)
+shapTest[,c(2,3)] <- round(shapTest[,c(2,3)], 4)
+
+write.csv(shapTest, file = "shapTest.csv")
+
+```
+
+Now plotting the distributions for a visual analysis
+
+```{r Distributions}
+
+
+#  creating a loop to show the distribution - area
+columns.for.loop <- c(6:10, 11, 17, 23, 29, 35, 41, 50:58, 81:84)
+for (i in columns.for.loop){
+
+  ggplot(FinalDF,aes(x = FinalDF[,i])) + geom_density() + labs(x = paste(colnames(FinalDF[i]) %>% str_replace_all("[.]", " ")))
+
+    ggsave(
+  filename = paste("Density.", colnames(FinalDF)[i], ".png", sep = ""), 
+  plot = last_plot()
+)
+  
+  
+
+}
+
+
+# QQ Plots
+columns.for.loop <- c(6:10, 11, 17, 23, 29, 35, 41, 50:58, 81:84)
+for (i in columns.for.loop){
+
+
+  ggplot(FinalDF,aes(sample = FinalDF[,i])) + geom_qq() + geom_qq_line() + labs(title = paste(colnames(FinalDF[i]) %>% str_replace_all("[.]", " ")))
+
+
+  ggsave(
+  filename = paste("QQ.", colnames(FinalDF)[i], ".png", sep = ""), 
+  plot = last_plot()
+)
+  
+  
+}
+
+# Have to create a bunch of long data for some of the basic analysis
+longSQS = melt(FinalDF[c(6:10)])
+longMeanScoresALL = melt(FinalDF[c(11, 17, 23, 29, 35, 41)])
+longMeanScoresELA = melt(FinalDF[c(11, 17, 23)])
+longMeanScoresMATH = melt(FinalDF[c(29, 35, 41)])
+longDemographics = melt(FinalDF[,c(48:58)])
+longDemographicsNOGENDER = melt(FinalDF[,c(50:58)])
+longDemographicsNOGENDERbySCHOOL = melt(data = FinalDF, id.vars = "UniqueID", measure.vars = c(50:54))
+longDemographicsSES = melt(FinalDF[,c(57:58)])
+
+
+
+# Creating a bunch of boxplot and violin plots for the variables using the long data
+
+ggplot(longSQS,aes(x=variable, y=value, fill=variable)) + geom_boxplot()  + theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+ggsave(
+  filename = "Box.SQS.png", 
+  plot = last_plot()
+)
+
+
+ggplot(longSQS,aes(x=variable, y=value, fill=variable)) + geom_violin()  + theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+
+ggplot(longMeanScoresALL,aes(x=variable, y=value, fill=variable)) + geom_boxplot()  + theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+ggsave(
+  filename = "Box.MeanScores.png", 
+  plot = last_plot()
+)
+
+
+ggplot(longMeanScoresALL,aes(x=variable, y=value, fill=variable)) + geom_violin()  + theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+
+ggplot(longMeanScoresELA,aes(x=variable, y=value, fill=variable)) + geom_boxplot()  + theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+ggplot(longMeanScoresELA,aes(x=variable, y=value, fill=variable)) + geom_violin()  + theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+# qplot(sample = value, data = longMeanScoresELA, color=variable) + stat_qq() + stat_qq_line()
+
+
+ggplot(longMeanScoresMATH,aes(x=variable, y=value, fill=variable)) + geom_boxplot()  + theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+# qplot(sample = value, data = longMeanScoresMATH, color=variable) + stat_qq() + stat_qq_line()
+
+
+ggplot(longDemographicsNOGENDER,aes(x=variable, y=value, fill=variable)) + geom_boxplot()  + theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+# qplot(sample = value, data = longDemographicsNOGENDER, color=variable) + stat_qq() + stat_qq_line()
+
+ggsave(
+  filename = "Box.Demographics.png", 
+  plot = last_plot()
+)
+
+ggplot(longDemographicsSES,aes(x=variable, y=value, fill=variable)) + geom_boxplot()  + theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+
+
+
+ggplot(longDemographicsSES,aes(x=variable, y=value, fill=variable)) + geom_violin()  + theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+# qplot(sample = value, data = longDemographicsSES, color=variable) + stat_qq() + stat_qq_line()
+
+ggplot(longDemographicsSES,aes(x=value, fill=variable)) + geom_histogram(binwidth = 2)
+
+
+longDemographicsNOGENDERbySCHOOL %>%
+  ggplot( aes(x=UniqueID, y=value, fill=variable)) + geom_col(alpha=0.25) + ylim(0, 100) + labs(x = "Schools", y = "Percent") + theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+# qplot(sample = value, data = longDemographicsNOGENDERbySCHOOL, color=variable) + stat_qq() + stat_qq_line()
+
+```
+
+
+As a density Plot
+
+```{r}
+longSQS = melt(FinalDF[c(6:10)])
+DensSQS <- ggplot(data=longSQS, aes(x=value, group=variable, fill=variable)) +
+    geom_density(adjust=1.5, alpha=.4) +
+    theme_ipsum()
+
+
+ ggsave(
+  filename = "Dens.SQS.v2.png", 
+  plot = last_plot()
+)
+
+
+longDemographicsNOGENDER = melt(FinalDF[,c(50:58)])
+DensDemo <- ggplot(data=longDemographicsNOGENDER, aes(x=value, group=variable, fill=variable)) +
+    geom_density(adjust=1.5, alpha=.4) +
+    theme_ipsum()
+
+
+
+
+longDemographicsNOGENDER.MULTI = melt(FinalDF[,c(50:52, 54:58)])
+DensDemo.v2 <- ggplot(data=longDemographicsNOGENDER.MULTI, aes(x=value, group=variable, fill=variable)) +
+    geom_density(adjust=1.5, alpha=.4) +
+    theme_ipsum()
+
+ 
+ ggsave(
+  filename = "Dens.Demo.v2.png", 
+  plot = last_plot()
+)
+  
+
+
+
+longMeanScoresALL = melt(FinalDF[c(11, 17, 23, 29, 35, 41)])
+DensNYSA <- ggplot(data=longMeanScoresALL, aes(x=value, group=variable, fill=variable)) +
+    geom_density(adjust=1.5, alpha=.4) +
+    theme_ipsum()
+
+
+ ggsave(
+  filename = "Dens.NYSA.v2.png", 
+  plot = last_plot()
+)
+
+```
+
+
+
+Skewness and Kurtosis
+```{r Skewness and Kurtosis}
+
+
+
+# Loop to create skewness and kurotosis table
+SkewKurtFinalDF = data.frame(matrix(vector(), 0, 6))
+colnames(SkewKurtFinalDF) <- c(paste("Variable"), paste("Skewness"), paste("Kurtosis"), paste("Excess Kurtosis"), paste("Type"), paste("ELA.Math"))
+SkewKurtFinalDF[,c(1,5,6)] <- lapply(SkewKurtFinalDF, as.character)
+SkewKurtFinalDF[,c(2:4)] <- lapply(SkewKurtFinalDF, as.numeric)
+
+#  creating a loop to show the distribution
+for (i in columns.for.loop){
+    SkewKurtLoopDF = data.frame(matrix(vector(), 1, 4))
+    SkewKurtLoopDF[1,1] <- colnames(FinalDF[i])
+    SkewKurtLoopDF[1,2] <- moments::skewness(FinalDF[i], na.rm = TRUE)
+    SkewKurtLoopDF[1,3] <- moments::kurtosis(FinalDF[i], na.rm = TRUE)
+    SkewKurtLoopDF[1,4] <- (moments::kurtosis(FinalDF[i], na.rm = TRUE)-3)
+  colnames(SkewKurtLoopDF) <- c(paste("Variable"), paste("Skewness"), paste("Kurtosis"), paste("Excess Kurtosis"))
+     SkewKurtFinalDF <- bind_rows(SkewKurtFinalDF, SkewKurtLoopDF) 
+}
+
+SkewKurtFinalDF[c(1:5), 5] <- "SQS"
+SkewKurtFinalDF[c(6:11), 5] <- "NYSA"
+SkewKurtFinalDF[c(12:20), 5] <- "Demographics"
+SkewKurtFinalDF[c(21:24), 5] <- "NYSA"
+SkewKurtFinalDF$Type <- as.factor(SkewKurtFinalDF$Type) 
+SkewKurtFinalDF[c(9:11,23:24), 6] <- "Math"
+SkewKurtFinalDF[c(6:8,21:22), 6] <- "ELA"
+
+
+write.csv(SkewKurtFinalDF, file = "SkewKurt.csv")
+
+# p <- ggplot(data = SkewKurtFinalDF) +  aes(Skewness, Kurtosis) + geom_point() + labs(title ="SQS - Skewness and Kurtosis", fill = "School Quality Survey") 
+# p + geom_text(aes(label=Variable)) + coord_cartesian()
+
+
+p <- ggplot(data = subset(SkewKurtFinalDF, Type == "SQS")) +  aes(Skewness, Kurtosis) + geom_point() + labs(title ="SQS - Skewness and Kurtosis", fill = "School Quality Survey")
+### geom_label_repel
+p  +
+  geom_label_repel(aes(label = Variable),
+                  box.padding   = 0.35, 
+                  point.padding = 1,
+                  segment.color = 'grey50',
+                  arrow = arrow(length = unit(0.03, "npc"), type = "closed", ends = "first"),
+    force = 10) +
+  theme_classic() 
+
+
+ ggsave(
+  filename = "Skew.Kurt.SQS.png", 
+  plot = last_plot()
+)
+
+
+p <- ggplot(data = subset(SkewKurtFinalDF, Type == "NYSA"),  aes(Skewness, Kurtosis, colour = factor(ELA.Math))) + geom_point()+ labs(title ="NYSA - Skewness and Kurtosis", fill = "NYSA")
+
+
+### geom_label_repel
+p  +
+  geom_label_repel(aes(label = Variable),
+                  box.padding   = 0.35, 
+                  point.padding = 1,
+                  segment.color = 'grey50',
+                  arrow = arrow(length = unit(0.03, "npc"), type = "closed", ends = "first"),
+    force = 10) + guides(fill=guide_legend(title = "NYSA")) +
+  theme_classic()
+
+
+ ggsave(
+  filename = "Skew.Kurt.NYSA.png", 
+  plot = last_plot()
+)
+
+
+
+
+p <- ggplot(data = subset(SkewKurtFinalDF, Type == "Demographics"),  aes(Skewness, Kurtosis)) + geom_point() + labs(title ="Demographics - Skewness and Kurtosis")
+### geom_label_repel
+p  +
+  geom_label_repel(aes(label = Variable),
+                  box.padding   = 0.35, 
+                  point.padding = 1,
+                  segment.color = 'grey50',
+                  arrow = arrow(length = unit(0.03, "npc"), type = "closed", ends = "first"),
+    force = 10) +
+  theme_classic()
+
+
+ ggsave(
+  filename = "Skew.Kurt.Demo.png", 
+  plot = last_plot()
+)
+
+
+p <- ggplot(data = SkewKurtFinalDF) +  aes(Skewness, Kurtosis) + geom_point() + labs(title ="Skewness and Kurtosis")
+
+
+### geom_label_repel
+p  +
+  geom_label_repel(aes(label = Variable),
+                  box.padding   = 0.35, 
+                  point.padding = 1,
+                  segment.color = 'grey50',
+                  arrow = arrow(length = unit(0.03, "npc"), type = "closed", ends = "first"),
+    force = 10) +
+  theme_classic()
+
+
+ ggsave(
+  filename = "Skew.Kurt.ALL.png", 
+  plot = last_plot()
+)
+
+
+```
+
+

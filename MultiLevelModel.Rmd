@@ -1,0 +1,73 @@
+---
+title: "Multilevel"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# ICC work
+
+merTools::ICC(outcome= "ELA.Level.Passing", group = "Borough", data = FinalDF)
+# 
+# 
+# 
+# 
+effort(est.type = "p", x = Borough, y = ELA.Level.Passing, data = FinalDF)
+ICCest(Borough, ELA.Level.Passing, data = FinalDF, CI.type = "S")
+ICCest(Borough, Rigorous.Instruction_Rescaled, data = FinalDF, CI.type = "S")
+ICCest(Borough, Economic.Need.Index, data = FinalDF, CI.type = "S")
+# 
+
+
+#random intercept model
+model1<-lmer(ELA.Level.Passing~1+(1|Borough),REML=FALSE,data=FinalDF)
+summary(model1)
+confint(model1)
+
+tab_model(model1)
+
+#calculating ICC (from 'merTools' package)
+merTools::ICC(outcome="ELA.Level.Passing",group="Borough",data=FinalDF)
+
+#adding level 1 predictors
+model2<-lmer(ELA.Level.Passing ~ 1 + Rigorous.Instruction_Rescaled +Economic.Need.Index+(1|Borough),REML=FALSE,data=FinalDF)
+summary(model2)
+anova(model1,model2)
+confint(model2)
+
+tab_model(model2)
+
+
+# Centering data for more analysis
+FinalDF$Rigorous.Instruction_Rescaled_gp_mean <- with(FinalDF, ave(Rigorous.Instruction_Rescaled, Borough, FUN = function(x) x - mean(x)))
+# Grand center mean ELA
+FinalDF$Rigorous.Instruction_Rescaled_gd_mean <- with(FinalDF, ave(Rigorous.Instruction_Rescaled, FUN = function(x) x - mean(x)))
+
+FinalDF$Economic.Need.Index_gp_mean <- with(FinalDF, ave(Economic.Need.Index, Borough, FUN = function(x) x - mean(x)))
+# Grand center mean ELA
+FinalDF$Economic.Need.Index_gd_mean <- with(FinalDF, ave(Economic.Need.Index, FUN = function(x) x - mean(x)))
+
+
+
+
+
+#adding level 2 predictors
+model3<-lmer(ELA.Level.Passing ~ 1 + Rigorous.Instruction_Rescaled + Economic.Need.Index + Rigorous.Instruction_Rescaled_GroupMean + Economic.Need.Index_GroupMean  + (1|Borough), REML=FALSE, data=FinalDF)
+summary(model3)
+anova(model2,model3)
+confint(model3)
+show_tests(test)
+
+
+tab_anova <- function(model, digits = 1, eps = .001){
+sjPlot::tab_df(broom::tidy(anova(model)) %>%
+mutate(p.value = format.pval(p.value, digits = digits, eps = eps)), digits = digits) 
+}
+
+
+tab_model(model1, model2, model3, pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, show.df = TRUE, string.ci = "Conf. Int (95%)",  string.p = "P-Value")
+
+```

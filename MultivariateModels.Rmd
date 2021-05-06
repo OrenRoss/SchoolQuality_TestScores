@@ -1,0 +1,167 @@
+---
+title: "Multivariate Models"
+author: "Oren Ross"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r GLMs}
+
+
+# Creating a multivariate linear model with all SQS to predict ELA passing percent
+
+glm.ELA <- glm(as.formula(paste("ELA.Level.Passing", paste(SQS_Rescaled, collapse=" + "), sep=" ~ ")), family = gaussian(), data = FinalDF)
+tab_model(glm.ELA,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value", file = "GLM.SQS.ELA.doc")
+
+
+stepAIC(glm.ELA)
+
+
+#  Adding ENI to the formula
+glm.ELA.econ <- glm(as.formula(paste("ELA.Level.Passing", paste(paste(SQS_Rescaled, collapse=" + ", sep = " + "), "Economic.Need.Index",  collapse=" + ", sep = " + "), sep=" ~ ")), family = gaussian(), data = FinalDF)
+tab_model(glm.ELA.econ,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value", file = "GLM.SQS.ENI.ELA.doc")
+
+
+
+# comparing a plot of the coefficients and CIs
+plot_models(glm.ELA, glm.ELA.econ, title = "Linear Model Coefficients for ELA Percent Passing",  axis.labels = Col.Labels.Clean, m.labels = c("Just SQS", "Including ENI"))
+
+tab_model(glm.ELA, glm.ELA.econ,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value", file = "GLM.SQS.vs.SQSENI.ELA.doc")
+ 
+
+
+
+glm.ELA.race <- glm(as.formula(paste("ELA.Level.Passing", paste(Race_formula, collapse=" + "), sep=" ~ ")), family = gaussian(), data = FinalDF)
+# summary(glm.demo.CT)
+tab_model(glm.ELA.race,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value", file = "GLM.Race.ELA.doc")
+
+#  Adding ENI to the racial formula
+glm.ELA.race.econ <- glm(as.formula(paste("ELA.Level.Passing", paste(paste(Race_formula, collapse=" + ", sep = " + "), "Economic.Need.Index",  collapse=" + ", sep = " + "), sep=" ~ ")), family = gaussian(), data = FinalDF)
+tab_model(glm.ELA.race.econ,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value", file = "GLM.Race.ENI.ELA.doc")
+
+glm.ELA.borough <- glm(ELA.Level.Passing ~ Borough, family = gaussian(), data = FinalDF)
+# summary(glm.demo.CT)
+tab_model(glm.ELA.borough,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value", file = "GLM.Borough.ELA.doc")
+
+# Looking at SQS as predicting ENI
+glm.SQS.ENI <- glm(as.formula(paste("Economic.Need.Index", paste(SQS_Rescaled, collapse=" + ", sep = " + "), sep=" ~ ")), data = FinalDF)
+# summary(glm.demo.ENI)
+
+tab_model(glm.SQS.ENI,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",string.p = "P-Value", file = "GLM.SQS.ENI.doc")
+plot_model(glm.demo.ENI, show.values = TRUE, value.offset = .3,   title = "Linear Model Coefficients for Economic Need Index", axis.labels = Col.Labels.Clean)
+
+
+tab_model(glm.SQS.ENI,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",string.p = "P-Value")
+
+```
+
+```{r}
+
+# Looking at race as predicting ENI
+glm.demo.ENI <- glm(as.formula(paste("Economic.Need.Index", paste(Race_formula, collapse=" + ", sep = " + "), sep=" ~ ")), data = FinalDF)
+# summary(glm.demo.ENI)
+
+tab_model(glm.demo.ENI,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value", file = "GLM.Race.ENI.doc")
+plot_model(glm.demo.ENI, show.values = TRUE, value.offset = .3,   title = "Linear Model Coefficients for Economic Need Index", axis.labels = Col.Labels.Clean)
+
+# GLM using SQS as DV and Race as IV
+# Collaborative teachers
+glm.demo.CT <- glm(as.formula(paste("Collaborative.Teachers_Rescaled", paste(Race_formula, collapse=" + "), sep=" ~ ")), family = gaussian(), data = FinalDF)
+# summary(glm.demo.CT)
+tab_model(glm.demo.CT,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value")
+
+# School leadership
+glm.demo.ESLeader <- glm(as.formula(paste("Effective.School.Leadership_Rescaled", paste(Race_formula, collapse=" + "), sep=" ~ ")), family = gaussian(), data = FinalDF)
+# summary(glm.demo.ESLeader)
+tab_model(glm.demo.ESLeader,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value")
+
+
+# Rigorous Instruction
+glm.demo.RI <- glm(as.formula(paste("Rigorous.Instruction_Rescaled", paste(Race_formula, collapse=" + "), sep=" ~ ")), family = gaussian(), data = FinalDF)
+# summary(glm.demo.RI)
+tab_model(glm.demo.RI,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value")
+
+
+# Strong Family Community Ties
+glm.demo.SFCT <- glm(as.formula(paste("Strong.Family.Community.Ties_Rescaled", paste(Race_formula, collapse=" + "), sep=" ~ ")), family = gaussian(), data = FinalDF)
+# summary(glm.demo.SFCT)
+tab_model(glm.demo.SFCT,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value")
+
+
+# Trust
+glm.demo.Trust <- glm(as.formula(paste("Trust_Rescaled", paste(Race_formula, collapse=" + "), sep=" ~ ")), family = gaussian(), data = FinalDF)
+# summary(glm.demo.Trust)
+tab_model(glm.demo.Trust,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value")
+
+
+plot_models(glm.demo.CT, glm.demo.ESLeader, show.values = TRUE,   title = "Testing", axis.labels = Col.Labels.Clean, m.labels = c("Colab Teachers", "Effective Leadership"))
+
+tab_model(glm.demo.CT, glm.demo.ESLeader, glm.demo.RI, glm.demo.SFCT, glm.demo.Trust, glm.demo.ENI, show.values = TRUE,   title = "Testing", axis.labels = Col.Labels.Clean, m.labels = c("Colab Teachers", "Effective Leadership")
+
+plot_models(glm.demo.CT, glm.demo.ESLeader, glm.demo.RI, glm.demo.SFCT, glm.demo.Trust,  title = "Demographics Predicting School Quality", axis.labels = Col.Labels.Clean, m.labels = c("Collaborative Teachers", "Effective School Leadership", "Rigorous Instruction", "Strong Family Community Ties", "Trust")
+save_plot(filename  = "glm_comparisons.SQS.demo.png",   axis.textsize = 0.6,
+  label.size = 1)
+
+tab_model(glm.demo.CT, glm.demo.ESLeader, glm.demo.RI, glm.demo.SFCT, glm.demo.Trust,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value", file = "glm_comparisons.SQS.demo.doc")
+
+
+glm.demo.ENI.Borough <- glm(as.formula(paste("Economic.Need.Index", paste(paste(paste(Race_formula, collapse=" + ", sep = " + "), "Borough",  collapse=" + ", sep = " + "), sep = " + "), sep=" ~ ")), data = FinalDF, na.action = na.pass)
+anova(glm.demo.ENI.Borough)
+summary(glm.demo.ENI.Borough)
+tab_model(glm.demo.ENI.Borough,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value", file = "GLM.ENI.Race.Bor.doc")
+plot_model(glm.demo.ENI.Borough, show.values = TRUE, value.offset = .3,   title = "Economic Need Index - Predicted by Race and Borough", axis.labels = Col.Labels.Clean)
+save_plot(filename  = "GLM.ENI.Race.Bor.png",   axis.textsize = 0.6,
+  label.size = 1)
+
+stepAIC(glm.demo.ENI.Borough)
+```
+
+
+
+
+```{r}
+glm.FULL <- glm(as.formula(paste("ELA.Level.Passing", paste(paste(SQS_Rescaled, collapse=" + ", sep = " + "), paste(Race_formula, collapse=" + ", sep = " + "), "Economic.Need.Index", "Borough",  collapse=" + ", sep = " + "), sep=" ~ ")), family = gaussian(), data = FinalDF)
+tab_model(glm.FULL,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value", file = "Full_glm.doc")
+
+
+
+stepAIC(glm.FULL)
+
+glm.FINAL <- glm(formula = ELA.Level.Passing ~ Collaborative.Teachers_Rescaled + 
+    Effective.School.Leadership_Rescaled + Rigorous.Instruction_Rescaled + 
+    Strong.Family.Community.Ties_Rescaled + Asian + Hispanic + 
+    Economic.Need.Index + Borough, family = gaussian(), data = FinalDF)
+
+tab_model(glm.FINAL,   pred.labels = Col.Labels.Clean, show.aic = TRUE, show.loglik =  TRUE, show.re.var = TRUE, show.obs = FALSE,  show.se = TRUE,  show.stat = TRUE,  collapse.se = TRUE, string.ci = "Conf. Int (95%)",
+  string.p = "P-Value",  file = "Final_glm.doc")
+plot_models(glm.ELA, glm.ELA.econ, glm.ELA.race, glm.ELA.boroug, glm.FULL, glm.FINAL,  axis.labels = Col.Labels.Clean, m.labels = c("Just SQS", "Including ENI", "Just Race", "Just Borough", "Full Model", "Final Model"), dot.size = .8,  line.size = .2)
+
+save_plot(filename  = "Final_glm_comparisons.png",   axis.textsize = 0.6,
+  label.size = 1)
+tab_model(glm.ELA, glm.ELA.econ, glm.ELA.race, glm.ELA.boroug, glm.FULL, glm.FINAL,   pred.labels = Col.Labels.Clean, file = "Final_glm_comparisons.doc")
+
+
+tab_model(glm.FINAL, glm.FULL,   pred.labels = Col.Labels.Clean, show.se = TRUE, show.std = TRUE, show.stat = TRUE,  file = "Final.vs.full_glm.doc")
+
+```
+
